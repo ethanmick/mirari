@@ -2,7 +2,6 @@ package mirari
 
 import (
 	"bytes"
-	"compress/gzip"
 	"encoding/json"
 	"io"
 	"io/ioutil"
@@ -11,21 +10,26 @@ import (
 	"time"
 )
 
+// Root URL to send data to
 var root = ""
 var client = &http.Client{Timeout: 30 * time.Second}
+
+// Token set by cli
+var Token string
 
 // Upload creates an API request.
 func Upload(path string, body interface{}) (*http.Request, error) {
 	uri := root + path
 	// Gzip data
-	buf := new(bytes.Buffer)
-	gz := gzip.NewWriter(buf)
-	err := json.NewEncoder(gz).Encode(body)
+	// 	buf := new(bytes.Buffer)
+	//	gz := gzip.NewWriter(buf)
+	//	err := json.NewEncoder(gz).Encode(body)
+	json, err := json.Marshal(body)
 	if err != nil {
 		return nil, err
 	}
-	gz.Close()
-	req, err := http.NewRequest("POST", uri, buf)
+	//	gz.Close()
+	req, err := http.NewRequest("POST", uri, bytes.NewBuffer(json))
 	if err != nil {
 		return nil, err
 	}
@@ -33,7 +37,7 @@ func Upload(path string, body interface{}) (*http.Request, error) {
 	req.Header.Set("Content-Encoding", "gzip")
 	req.Header.Set("Accept", "application/json")
 	req.Header.Set("User-Agent", "mirari/0.0.1")
-	req.Header.Set("Authorization", "token")
+	req.Header.Set("Authorization", "token "+Token)
 	return req, nil
 }
 

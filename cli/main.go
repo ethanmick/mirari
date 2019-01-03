@@ -1,6 +1,8 @@
 package main
 
 import (
+	"flag"
+	"fmt"
 	"io/ioutil"
 	"log"
 	"os"
@@ -40,8 +42,12 @@ func ParseAll(f string) (mirari.UploadData, error) {
 	col, err := mirari.ParseCollection(str)
 	decks, err := mirari.ParseDecks(str)
 	inv, err := mirari.ParsePlayerInventory(str)
+	if err != nil {
+		log.Printf("error parsing player inventory: %v\n", err.Error())
+	}
 	rank, err := mirari.ParseRankInfo(str)
 	auth, err := mirari.ParseAuthRequest(str)
+	matches := mirari.ParseMatches(str)
 	// Store it all
 	if col != nil {
 		data.Collection = &col
@@ -57,6 +63,9 @@ func ParseAll(f string) (mirari.UploadData, error) {
 	}
 	if auth != nil {
 		data.Auth = auth
+	}
+	if matches != nil {
+		data.Matches = &matches
 	}
 	return data, err
 }
@@ -89,6 +98,20 @@ func onChange(f string, force bool) {
 
 func main() {
 	log.Println("mirari client starting")
+	var flagLog = flag.String("log", "", "log location")
+	var authToken = flag.String("token", "", "Authentication token")
+	flag.Parse()
+	if flagLog != nil {
+		onChange(*flagLog, true)
+		return
+	}
+	fmt.Println("OKAY")
+	os.Exit(0)
+	fmt.Println(authToken)
+	if authToken == nil {
+		log.Fatalln("Error, need auth token to upload data! Use `-token=TOKEN`")
+	}
+	mirari.Token = *authToken
 	user, err := user.Current()
 	if err != nil {
 		log.Fatalf("failed to get current user: %v", err.Error())

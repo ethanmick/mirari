@@ -275,7 +275,6 @@ func parseJSONBackoff(s string, res interface{}) error {
 	}
 	log.Printf("parsing: %v\n", s)
 	if err := json.Unmarshal([]byte(s), &res); err != nil {
-		log.Printf("error parsing json: %v", err.Error())
 		split := strings.Split(s, "\n")
 		split = split[:len(split)-1]
 		return parseJSONBackoff(strings.Join(split, "\n"), res)
