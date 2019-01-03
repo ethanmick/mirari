@@ -2,7 +2,6 @@ package main
 
 import (
 	"flag"
-	"fmt"
 	"io/ioutil"
 	"log"
 	"os"
@@ -97,18 +96,15 @@ func onChange(f string, force bool) {
 }
 
 func main() {
-	log.Println("mirari client starting")
+	log.Println("mirari 2 client starting")
 	var flagLog = flag.String("log", "", "log location")
 	var authToken = flag.String("token", "", "Authentication token")
 	flag.Parse()
-	if flagLog != nil {
+	if *flagLog != "" {
 		onChange(*flagLog, true)
 		return
 	}
-	fmt.Println("OKAY")
-	os.Exit(0)
-	fmt.Println(authToken)
-	if authToken == nil {
+	if *authToken == "" {
 		log.Fatalln("Error, need auth token to upload data! Use `-token=TOKEN`")
 	}
 	mirari.Token = *authToken
