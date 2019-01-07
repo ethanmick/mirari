@@ -1,4 +1,4 @@
-package mirari
+package gathering
 
 import (
 	"encoding/json"

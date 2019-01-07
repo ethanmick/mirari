@@ -7,13 +7,13 @@ import (
 	"os"
 	"os/user"
 	"path/filepath"
+	"runtime"
 	"time"
 
-	"github.com/ethanmick/mirari"
+	"github.com/ethanmick/gathering"
 	"github.com/fsnotify/fsnotify"
 )
 
-const logLocation = "\\AppData\\LocalLow\\Wizards Of The Coast\\MTGA"
 const fileName = "output_log.txt"
 
 var lastUpload = time.Now()
@@ -31,22 +31,22 @@ func readFile(f string) (string, error) {
 }
 
 // ParseAll gets all data from a log
-func ParseAll(f string) (mirari.UploadData, error) {
-	data := mirari.UploadData{}
+func ParseAll(f string) (gathering.UploadData, error) {
+	data := gathering.UploadData{}
 	str, err := readFile(f)
 	if err != nil {
 		return data, err
 	}
 	// Parse Everything
-	col, err := mirari.ParseCollection(str)
-	decks, err := mirari.ParseDecks(str)
-	inv, err := mirari.ParsePlayerInventory(str)
+	col, err := gathering.ParseCollection(str)
+	decks, err := gathering.ParseDecks(str)
+	inv, err := gathering.ParsePlayerInventory(str)
 	if err != nil {
 		log.Printf("error parsing player inventory: %v\n", err.Error())
 	}
-	rank, err := mirari.ParseRankInfo(str)
-	auth, err := mirari.ParseAuthRequest(str)
-	matches := mirari.ParseMatches(str)
+	rank, err := gathering.ParseRankInfo(str)
+	auth, err := gathering.ParseAuthRequest(str)
+	matches := gathering.ParseMatches(str)
 	// Store it all
 	if col != nil {
 		data.Collection = &col
@@ -81,13 +81,13 @@ func onChange(f string, force bool) {
 		log.Printf("error parsing log file: %v\n", err.Error())
 	}
 	log.Println("uploading body (even if error)")
-	req, err := mirari.Upload("/upload/raw", body)
+	req, err := gathering.Upload("/upload/raw", body)
 	if err != nil {
 		log.Printf("error creating request: %v\n", err.Error())
 		return
 	}
 	var data interface{}
-	_, err = mirari.Do(req, data)
+	_, err = gathering.Do(req, data)
 	if err != nil {
 		log.Printf("error uploading data: %v\n", err.Error())
 		return
@@ -96,27 +96,32 @@ func onChange(f string, force bool) {
 }
 
 func main() {
-	log.Println("mirari client starting")
-	var flagLog = flag.String("log", "", "log location")
-	var authToken = flag.String("token", "", "Authentication token")
+	log.Println("gathering client starting")
+	var dirFlag = flag.String("dir", "", "The directory where the log file is located. This is useful when running on non-windows platforms where the log directory is not well known.")
+	var filenameFlag = flag.String("file", fileName, "The name of the log file")
+	var tokenFlag = flag.String("token", "", "Required: Your authentication token")
 	flag.Parse()
-	if *authToken == "" {
-		log.Fatalln("Error, need auth token to upload data! Use `-token=TOKEN`")
+	if *tokenFlag == "" {
+		log.Fatalln("Error, need authentication token to upload data! Use `-token=TOKEN`")
 	}
-	mirari.Token = *authToken
-	if *flagLog != "" {
-		onChange(*flagLog, true)
-		return
-	}
+	gathering.Token = *tokenFlag
 	user, err := user.Current()
 	if err != nil {
 		log.Fatalf("failed to get current user: %v", err.Error())
 	}
 	log.Printf("user home directory: %v\n", user.HomeDir)
-	loc := filepath.Join(user.HomeDir, logLocation)
-	log.Printf("watching dir: %v\n", loc)
+	var loc string
+	if *dirFlag != "" {
+		loc = *dirFlag
+	} else {
+		if gathering.LogDir == "" {
+			log.Fatalf("Fatal: No log directory specified and the log location is unknown on this platform: '%v'. Please see `-help`\n", runtime.GOOS)
+		}
+		loc = filepath.Join(user.HomeDir, gathering.LogDir)
+	}
+	log.Printf("watching dir: '%v' with filename: '%v'\n", loc, *filenameFlag)
 	watcher, err := fsnotify.NewWatcher()
-	onChange(filepath.Join(loc, fileName), true)
+	onChange(filepath.Join(loc, *filenameFlag), true)
 	if err != nil {
 		log.Fatalf("error creating watcher: %v\n", err.Error())
 	}

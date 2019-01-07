@@ -1,4 +1,4 @@
-package mirari
+package gathering
 
 // UploadData encapsulates the data to send to the server
 type UploadData struct {
