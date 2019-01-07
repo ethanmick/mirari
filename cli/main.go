@@ -96,18 +96,18 @@ func onChange(f string, force bool) {
 }
 
 func main() {
-	log.Println("mirari 2 client starting")
+	log.Println("mirari client starting")
 	var flagLog = flag.String("log", "", "log location")
 	var authToken = flag.String("token", "", "Authentication token")
 	flag.Parse()
-	if *flagLog != "" {
-		onChange(*flagLog, true)
-		return
-	}
 	if *authToken == "" {
 		log.Fatalln("Error, need auth token to upload data! Use `-token=TOKEN`")
 	}
 	mirari.Token = *authToken
+	if *flagLog != "" {
+		onChange(*flagLog, true)
+		return
+	}
 	user, err := user.Current()
 	if err != nil {
 		log.Fatalf("failed to get current user: %v", err.Error())
