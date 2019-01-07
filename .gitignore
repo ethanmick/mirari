@@ -23,4 +23,4 @@ env
 !.elasticbeanstalk/*.global.yml
 
 output*
-mirari
+gathering*

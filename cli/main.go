@@ -30,6 +30,27 @@ func readFile(f string) (string, error) {
 	return string(raw[:]), nil
 }
 
+func upload(loc string) error {
+	file, err := os.Open(loc)
+	if err != nil {
+		return err
+	}
+	defer file.Close()
+	req, err := gathering.UploadFile("/upload/raw", "file", file)
+	if err != nil {
+		log.Printf("error creating file upload request: %v\n", err.Error())
+		return err
+	}
+	var data interface{}
+	_, err = gathering.Do(req, data)
+	if err != nil {
+		log.Printf("error uploading file: %v\n", err.Error())
+		return nil
+	}
+	log.Printf("file upload success!")
+	return nil
+}
+
 // ParseAll gets all data from a log
 func ParseAll(f string) (gathering.UploadData, error) {
 	data := gathering.UploadData{}
@@ -81,7 +102,7 @@ func onChange(f string, force bool) {
 		log.Printf("error parsing log file: %v\n", err.Error())
 	}
 	log.Println("uploading body (even if error)")
-	req, err := gathering.Upload("/upload/raw", body)
+	req, err := gathering.Upload("/upload/json", body)
 	if err != nil {
 		log.Printf("error creating request: %v\n", err.Error())
 		return
@@ -100,6 +121,7 @@ func main() {
 	var dirFlag = flag.String("dir", "", "The directory where the log file is located. This is useful when running on non-windows platforms where the log directory is not well known.")
 	var filenameFlag = flag.String("file", fileName, "The name of the log file")
 	var tokenFlag = flag.String("token", "", "Required: Your authentication token")
+	var uploadFlag = flag.Bool("upload", true, "Upload raw file to server on start")
 	flag.Parse()
 	if *tokenFlag == "" {
 		log.Fatalln("Error, need authentication token to upload data! Use `-token=TOKEN`")
@@ -119,6 +141,11 @@ func main() {
 		}
 		loc = filepath.Join(user.HomeDir, gathering.LogDir)
 	}
+
+	if *uploadFlag {
+		upload(loc)
+	}
+
 	log.Printf("watching dir: '%v' with filename: '%v'\n", loc, *filenameFlag)
 	watcher, err := fsnotify.NewWatcher()
 	onChange(filepath.Join(loc, *filenameFlag), true)

@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"io"
 	"io/ioutil"
+	"mime/multipart"
 	"net/http"
 	"net/url"
 	"time"
@@ -39,6 +40,29 @@ func Upload(path string, body interface{}) (*http.Request, error) {
 	req.Header.Set("User-Agent", "mirari/0.0.1")
 	req.Header.Set("Authorization", "token "+Token)
 	return req, nil
+}
+
+// UploadFile uploads a file
+func UploadFile(path, name string, file io.Reader) (*http.Request, error) {
+	uri := root + path
+	body := &bytes.Buffer{}
+	writer := multipart.NewWriter(body)
+	part, err := writer.CreateFormFile(name, name)
+	if err != nil {
+		return nil, err
+	}
+	_, err = io.Copy(part, file)
+	if err != nil {
+		return nil, err
+	}
+	err = writer.Close()
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("POST", uri, body)
+	req.Header.Set("Content-Type", writer.FormDataContentType())
+	return req, err
 }
 
 // Do sends an API request and returns the API response.
