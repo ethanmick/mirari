@@ -3,6 +3,7 @@ package gathering
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"io"
 	"io/ioutil"
 	"mime/multipart"
@@ -13,7 +14,8 @@ import (
 
 // Root URL to send data to
 var root = ""
-var client = &http.Client{Timeout: 30 * time.Second}
+var version = ""
+var client = &http.Client{Timeout: 600 * time.Second}
 
 // Token set by cli
 var Token string
@@ -35,9 +37,8 @@ func Upload(path string, body interface{}) (*http.Request, error) {
 		return nil, err
 	}
 	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("Content-Encoding", "gzip")
 	req.Header.Set("Accept", "application/json")
-	req.Header.Set("User-Agent", "mirari/0.0.1")
+	req.Header.Set("User-Agent", fmt.Sprintf("gathering/%s", version))
 	req.Header.Set("Authorization", "token "+Token)
 	return req, nil
 }
@@ -62,6 +63,8 @@ func UploadFile(path, name string, file io.Reader) (*http.Request, error) {
 
 	req, err := http.NewRequest("POST", uri, body)
 	req.Header.Set("Content-Type", writer.FormDataContentType())
+	req.Header.Set("User-Agent", fmt.Sprintf("gathering/%s", version))
+	req.Header.Set("Authorization", "token "+Token)
 	return req, err
 }
 

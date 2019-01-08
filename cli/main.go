@@ -143,7 +143,8 @@ func main() {
 	}
 
 	if *uploadFlag {
-		upload(loc)
+		log.Println("Uploading raw log file")
+		upload(filepath.Join(loc, fileName))
 	}
 
 	log.Printf("watching dir: '%v' with filename: '%v'\n", loc, *filenameFlag)

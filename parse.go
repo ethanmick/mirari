@@ -273,7 +273,6 @@ func parseJSONBackoff(s string, res interface{}) error {
 		log.Println("json backoff failed with empty string")
 		return errors.New("unable to parse")
 	}
-	log.Printf("parsing: %v\n", s)
 	if err := json.Unmarshal([]byte(s), &res); err != nil {
 		split := strings.Split(s, "\n")
 		split = split[:len(split)-1]
